@@ -1,0 +1,56 @@
+# Entorno virtual
+venv/
+
+# Resultados generados
+results/
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Archivos temporales
+*.log
+*.tmp
+
+# Configuración de VS Code
+.vscode/
+
+# Archivos del sistema
+.DS_Store
+# Entornos virtuales
+venv/
+app/venv/
+**/venv/
+
+# Caché de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Datos sensibles (NO subir nunca)
+cases/
+results/
+targets/
+wordlists/
+data/
+logs/
+reports/
+
+# Archivos de evidencia y objetivos
+*.txt
+!requirements.txt
+!README.md
+
+# Casos OSINT
+CASE-*/
+
+# Configuración local
+.env
+*.local
+
+# VS Code
+.vscode/
+
+# Archivos temporales
+.DS_Store
+*.swp
