@@ -54,3 +54,10 @@ CASE-*/
 # Archivos temporales
 .DS_Store
 *.swp
+.aider*
+venv/
+__pycache__/
+.pytest_cache/
+.aider.tags.cache.v4/
+active_case.json
+results/
