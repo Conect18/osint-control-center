@@ -1,82 +1,59 @@
-"""
-Registro central de herramientas OSINT.
-"""
+"""Registro central de herramientas OSINT con estado persistente."""
 
-from services.sherlock_service import run as sherlock
-from services.maigret_service import run as maigret
-from services.holehe_service import run as holehe
-from services.sublist3r_service import run as sublist3r
+import json
+from pathlib import Path
 
+from app.services import (
+    holehe_service, maigret_service, nmap_service, sherlock_service, sublist3r_service,
+)
+
+STATE_FILE = Path(__file__).resolve().parent / "config" / "tools.json"
 
 TOOLS = {
-
     "users": [
-
-        {
-            "name": "Sherlock",
-            "runner": sherlock,
-            "enabled": True,
-        },
-
-        {
-            "name": "Maigret",
-            "runner": maigret,
-            "enabled": True,
-        }
-
+        {"name": "Sherlock", "runner": sherlock_service.run},
+        {"name": "Maigret", "runner": maigret_service.run},
     ],
-
-    "emails": [
-
-        {
-            "name": "Holehe",
-            "runner": holehe,
-            "enabled": True,
-        }
-
-    ],
-
+    "emails": [{"name": "Holehe", "runner": holehe_service.run}],
     "domains": [
-
-        {
-            "name": "Sublist3r",
-            "runner": sublist3r,
-            "enabled": True,
-        }
-
+        {"name": "Sublist3r", "runner": sublist3r_service.run},
+        {"name": "Nmap", "runner": nmap_service.run},
     ],
-
-    "phones": [
-
-    ],
-
-    "images": [
-
-    ]
-
+    "hosts": [{"name": "Nmap", "runner": nmap_service.run}],
+    "phones": [],
+    "images": [],
 }
 
 
-def get_tools(category):
+def _load_state():
+    try:
+        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
 
-    return [
-        tool
-        for tool in TOOLS.get(category, [])
-        if tool["enabled"]
-    ]
+
+def _save_state(state):
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+
+
+def is_enabled(category, name):
+    return _load_state().get(category, {}).get(name, True)
+
+
+def get_tools(category):
+    return [t for t in TOOLS.get(category, []) if is_enabled(category, t["name"])]
+
+
+def set_enabled(category, name, enabled: bool):
+    state = _load_state()
+    state.setdefault(category, {})[name] = enabled
+    _save_state(state)
 
 
 def enable_tool(category, name):
-
-    for tool in TOOLS.get(category, []):
-
-        if tool["name"] == name:
-            tool["enabled"] = True
+    set_enabled(category, name, True)
 
 
 def disable_tool(category, name):
-
-    for tool in TOOLS.get(category, []):
-
-        if tool["name"] == name:
-            tool["enabled"] = False
+    set_enabled(category, name, False)

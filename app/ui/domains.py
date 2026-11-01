@@ -1,7 +1,7 @@
 from rich.console import Console
 
-from core.case_manager import create_case
-from core.engine import run
+from app.core.case_manager import create_case
+from app.core.engine import run
 
 console = Console()
 

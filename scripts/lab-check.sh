@@ -1,32 +1,18 @@
 #!/bin/bash
+set -uo pipefail
 
 echo "==============================="
 echo "      OSINT LAB CHECK"
 echo "==============================="
 
-echo
-echo "[Sistema]"
-uname -a
+echo; echo "[Sistema]"; uname -a
+echo; echo "[Python]"; python3 --version
 
-echo
-echo "[Python]"
-python3 --version
+echo; echo "[Git]"
+if command -v git >/dev/null 2>&1; then git --version; else echo "✘ git"; fi
 
-echo
-echo "[Git]"
-git --version
-
-echo
-echo "[Node]"
-node --version
-
-echo
-echo "[Nmap]"
-nmap --version | head -1
-
-echo
-echo "[Herramientas OSINT]"
-for tool in sherlock holehe maigret sublist3r; do
+echo; echo "[Herramientas OSINT]"
+for tool in sherlock holehe maigret sublist3r nmap; do
     if command -v "$tool" >/dev/null 2>&1; then
         echo "✔ $tool"
     else
@@ -34,6 +20,4 @@ for tool in sherlock holehe maigret sublist3r; do
     fi
 done
 
-echo
-echo "[Espacio]"
-df -h /
+echo; echo "[Espacio]"; df -h /

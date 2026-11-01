@@ -1,57 +1,38 @@
-from pathlib import Path
 import json
+import os
+from pathlib import Path
 
-
-LAB_PATH = Path(__file__).resolve().parent.parent.parent
-ACTIVE_CASE_FILE = LAB_PATH / "active_case.json"
+from app.config.settings import ACTIVE_CASE_FILE
 
 CURRENT_CASE = None
 
 
 def set_case(case_path: Path):
     global CURRENT_CASE
+    CURRENT_CASE = Path(case_path).resolve()
 
-    CURRENT_CASE = Path(case_path)
-
-    data = {
-        "active_case": str(CURRENT_CASE)
-    }
-
-    with open(ACTIVE_CASE_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+    tmp = ACTIVE_CASE_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"active_case": str(CURRENT_CASE)}, indent=2), encoding="utf-8")
+    os.replace(tmp, ACTIVE_CASE_FILE)
 
 
 def get_case():
     global CURRENT_CASE
-
-    if CURRENT_CASE is not None:
+    if CURRENT_CASE is not None and CURRENT_CASE.exists():
         return CURRENT_CASE
-
-    if not ACTIVE_CASE_FILE.exists():
-        return None
+    CURRENT_CASE = None
 
     try:
-
-        with open(ACTIVE_CASE_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        case_path = data.get("active_case")
-
-        if not case_path:
-            return None
-
-        path = Path(case_path)
-
-        if not path.exists():
-            return None
-
-        CURRENT_CASE = path
-
-        return CURRENT_CASE
-
-    except (json.JSONDecodeError, OSError):
-
+        data = json.loads(ACTIVE_CASE_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
         return None
+
+    path = Path(data.get("active_case") or "")
+    if not path.is_dir():
+        return None
+
+    CURRENT_CASE = path
+    return CURRENT_CASE
 
 
 def has_case():
@@ -60,11 +41,8 @@ def has_case():
 
 def close_case():
     global CURRENT_CASE
-
     CURRENT_CASE = None
-
-    if ACTIVE_CASE_FILE.exists():
-        try:
-            ACTIVE_CASE_FILE.unlink()
-        except OSError:
-            pass
+    try:
+        ACTIVE_CASE_FILE.unlink()
+    except OSError:
+        pass

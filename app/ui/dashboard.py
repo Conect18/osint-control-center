@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from core.active_case import get_case
+from app.core.active_case import get_case
 
 console = Console()
 

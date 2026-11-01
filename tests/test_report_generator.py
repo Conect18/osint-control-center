@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 # The conftest.py file adds `app/` to sys.path, allowing this import.
-from core.report_generator import generate_report
+from app.core.report_generator import generate_report
 
 
 @pytest.fixture

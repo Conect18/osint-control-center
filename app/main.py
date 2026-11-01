@@ -1,6 +1,9 @@
-from app import OSINTApplication
+from app.application import OSINTApplication
+
+
+def main():
+    OSINTApplication().run()
 
 
 if __name__ == "__main__":
-
-    OSINTApplication().run()
+    main()

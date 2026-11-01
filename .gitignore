@@ -1,33 +1,30 @@
-# Entorno virtual
+# Entornos
 venv/
-
-# Resultados generados
-results/
-
-# Caché de Python
-__pycache__/
-*.pyc
-
-# Archivos temporales
-*.log
-*.tmp
-
-# Configuración de VS Code
-.vscode/
-
-# Archivos del sistema
-.DS_Store
-# Entornos virtuales
-venv/
-app/venv/
+.venv/
 **/venv/
 
-# Caché de Python
+# Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*.egg-info/
+build/
+dist/
 
-# Datos sensibles (NO subir nunca)
+# Cachés
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Aider
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v4/
+
+# Estado de ejecución
+active_case.json
+app/config/tools.json
+
+# Datos de casos (PII)
 cases/
 results/
 targets/
@@ -35,29 +32,14 @@ wordlists/
 data/
 logs/
 reports/
-
-# Archivos de evidencia y objetivos
 *.txt
 !requirements.txt
-!README.md
+!requirements-dev.txt
 
-# Casos OSINT
-CASE-*/
-
-# Configuración local
+# Local
 .env
 *.local
-
-# VS Code
-.vscode/
-
-# Archivos temporales
+*.log
 .DS_Store
 *.swp
-.aider*
-venv/
-__pycache__/
-.pytest_cache/
-.aider.tags.cache.v4/
-active_case.json
-results/
+.vscode/

@@ -1,91 +1,163 @@
-from pathlib import Path
-from datetime import datetime
 import json
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+
+LEGACY_FILES = (
+    ("users", "sherlock.txt"),
+    ("users", "maigret.txt"),
+    ("emails", "holehe.txt"),
+    ("domains", "sublist3r.txt"),
+)
 
 
-def generate_report(case_path: Path):
+def _load_info(case_path):
+    try:
+        return json.loads((case_path / "info.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
 
-    info_file = case_path / "info.json"
 
-    # Si no existe el archivo de información del caso, no hacemos nada.
-    if not info_file.exists():
-        return
+def _save_info(case_path, info):
+    try:
+        (case_path / "info.json").write_text(
+            json.dumps(info, indent=4, ensure_ascii=False), encoding="utf-8"
+        )
+    except OSError:
+        pass
 
-    # Cargar la información del caso.
-    with open(info_file, "r", encoding="utf8") as f:
-        info = json.load(f)
 
-    # Directorio donde se guardarán los reportes.
-    report_dir = case_path / "reports"
-    report_dir.mkdir(exist_ok=True)
-
-    # Generar el resumen del caso y guardarlo como JSON.
-    summary = {
-        "case_id": info["case_id"],
-        "target": info["target"],
-        "type": info["type"],
-        "status": info["status"],
-        "generated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-
-    with open(report_dir / "summary.json", "w", encoding="utf8") as f:
-        json.dump(summary, f, indent=4)
-
-    # ----------------------------------------------------------------------
-    # Preparar la sección de Evidencia.
-    # ----------------------------------------------------------------------
-    # Se busca el archivo `sherlock.txt` dentro del subdirectorio `users`
-    # del caso. Si existe, su contenido se inserta dentro de un bloque de
-    # código Markdown. Si no, se muestra un mensaje informativo.
-    sherlock_path = case_path / "users" / "sherlock.txt"
-    if sherlock_path.exists():
+def _executions(case_path):
+    for path in sorted(case_path.glob("*/*/execution.json")):
         try:
-            sherlock_content = sherlock_path.read_text(encoding="utf8")
-            evidence_section = (
-                "### Sherlock Results\n\n"
-                "```text\n"
-                f"{sherlock_content.rstrip()}\n"
-                "```\n"
-            )
-        except OSError:
-            # En caso de error al leer el archivo, se indica que no se pudo
-            # obtener la información.
-            evidence_section = "No se pudo leer el archivo de resultados de Sherlock.\n"
+            yield path, json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+
+
+def _legacy(case_path):
+    """Archivos de resultado del formato anterior a v1.3."""
+    found = []
+    for folder, name in LEGACY_FILES:
+        path = case_path / folder / name
+        if path.is_file():
+            try:
+                content = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if content.strip():
+                found.append((f"{folder}/{name}", content))
+    return found
+
+
+def _fence(text):
+    text = (text or "").rstrip()
+    fence = "```"
+    while fence in text:
+        fence += "`"
+    return f"{fence}text\n{text}\n{fence}"
+
+
+def _register_report(case_path, info, rel_path):
+    reports = info.get("reports")
+    if not isinstance(reports, list):
+        reports = []
+    if rel_path not in reports:
+        reports.append(rel_path)
+    info["reports"] = reports
+    info["updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _save_info(case_path, info)
+
+
+def _show(case_path, report_path):
+    if os.environ.get("OSINT_SHOW_REPORT", "1") != "1":
+        return
+    if not sys.stdout.isatty():
+        return
+    try:
+        from app.ui import viewer
+    except ImportError:
+        return
+    viewer.view(case_path, report_path)
+
+
+def generate_report(case_path: Path, results=None):
+    case_path = Path(case_path)
+    info = _load_info(case_path)
+    if not info:
+        return None
+
+    report_dir = case_path / "reports"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    generated = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    summary = {
+        "case_id": info.get("case_id"),
+        "target": info.get("target"),
+        "type": info.get("type"),
+        "status": info.get("status"),
+        "generated": generated,
+    }
+    (report_dir / "summary.json").write_text(
+        json.dumps(summary, indent=4, ensure_ascii=False), encoding="utf-8"
+    )
+
+    lines = [
+        "# OSINT REPORT",
+        "",
+        f"- Case ID: {info.get('case_id')}",
+        f"- Target: {info.get('target')}",
+        f"- Type: {info.get('type')}",
+        f"- Status: {info.get('status')}",
+        f"- Created: {info.get('created')}",
+        f"- Generated: {generated}",
+        "",
+        "## Herramientas ejecutadas",
+        "",
+        "| Herramienta | Estado | Hallazgos | Duración (s) |",
+        "|---|---|---|---|",
+    ]
+
+    evidence = []
+    rows = 0
+    for path, meta in _executions(case_path):
+        tool = meta.get("tool", "?")
+        rows += 1
+        lines.append(
+            f"| {tool} | {meta.get('status', '?')} | "
+            f"{meta.get('findings', 0)} | {meta.get('duration', 0)} |"
+        )
+        out = path.parent / "stdout.txt"
+        if out.is_file():
+            content = out.read_text(encoding="utf-8", errors="replace")
+            if content.strip():
+                evidence.append(f"### {tool}\n\n{_fence(content)}\n")
+
+    if rows == 0:
+        lines.append("| — | — | — | — |")
+
+    lines += ["", "## Evidencia", ""]
+
+    if evidence:
+        lines += evidence
     else:
-        evidence_section = "No hay resultados de Sherlock para este caso.\n"
+        legacy = _legacy(case_path)
+        if legacy:
+            for label, content in legacy:
+                lines += [f"### {label}", "", _fence(content), ""]
+        if not (case_path / "users" / "sherlock.txt").is_file():
+            lines.append("No hay resultados de Sherlock para este caso.")
+        if not legacy:
+            lines.append("")
+            lines.append("Sin salida registrada.")
 
-    # ----------------------------------------------------------------------
-    # Construir el reporte Markdown completo.
-    # ----------------------------------------------------------------------
-    report = f"""# OSINT REPORT
+    lines += ["", "## Fin del reporte", ""]
 
-Case ID: {info['case_id']}
+    report_path = report_dir / "report.md"
+    report_path.write_text("\n".join(lines), encoding="utf-8")
 
-Target: {info['target']}
+    _register_report(case_path, info, f"reports/{report_path.name}")
+    _show(case_path, report_path)
 
-Type: {info['type']}
-
-Status: {info['status']}
-
-Created:
-{info['created']}
-
-Generated:
-{summary['generated']}
-
-## Evidence
-
-users/
-emails/
-domains/
-logs/
-metadata/
-evidence/
-
-{evidence_section}
-## End of report
-"""
-
-    # Guardar el reporte en formato Markdown.
-    with open(report_dir / "report.md", "w", encoding="utf8") as f:
-        f.write(report)
+    return report_path

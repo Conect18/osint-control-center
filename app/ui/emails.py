@@ -1,7 +1,8 @@
 from rich.console import Console
 
-from core.case_manager import create_case
-from core.engine import run
+from app.core.case_manager import create_case
+from app.core.engine import run
+from app.core.normalize import InvalidTarget
 
 console = Console()
 
@@ -19,19 +20,29 @@ def menu():
     if not email:
         return
 
-    case = create_case(
-        email,
-        "email"
-    )
+    try:
+        case = create_case(
+            email,
+            "email"
+        )
+    except InvalidTarget as exc:
+        console.print(f"\n[bold red]Objetivo inválido:[/] {exc}")
+        console.input("\nENTER para continuar...")
+        return
 
     console.print("\n📁 Caso creado")
     console.print(case)
 
-    run(
-        case,
-        "emails",
-        email
-    )
+    try:
+        run(
+            case,
+            "emails",
+            email
+        )
+    except Exception as exc:
+        console.print(f"\n[bold red]Error durante la investigación:[/] {exc}")
+        console.input("\nENTER para continuar...")
+        return
 
     console.print("\n[bold green]Investigación terminada.[/]")
 

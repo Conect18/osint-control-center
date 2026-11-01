@@ -22,6 +22,7 @@ def show_menu():
     console.print("5. 🛠 Herramientas")
     console.print("6. 📂 Resultados")
     console.print("7. 📑 Reportes")
+    console.print("8. 🗂 Caso activo")
     console.print("0. ❌ Salir")
 
     console.print()
