@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import sys
@@ -20,12 +21,10 @@ def _load_info(case_path):
 
 
 def _save_info(case_path, info):
-    try:
+    with contextlib.suppress(OSError):
         (case_path / "info.json").write_text(
             json.dumps(info, indent=4, ensure_ascii=False), encoding="utf-8"
         )
-    except OSError:
-        pass
 
 
 def _executions(case_path):

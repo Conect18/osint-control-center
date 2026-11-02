@@ -6,13 +6,15 @@ from rich.table import Table
 from app.config.settings import CASES_PATH
 from app.core.active_case import get_case
 from app.ui import viewer
+from app.ui.analysis import show_analysis
 from app.utils.files import case_files
 
 console = Console()
 
 HINT = (
-    "[dim]Nº = abrir · f = primero · u = último · r Nº = crudo · "
-    "e Nº = editor · c Nº = copiar ruta · ENTER = volver[/]"
+    "[dim]Nº = abrir · a = análisis · f = primero · "
+    "u = ultimo · r Nº = crudo · e Nº = editor · "
+    "c Nº = copiar ruta · ENTER = volver[/]"
 )
 
 
@@ -82,13 +84,19 @@ def show_case_results(case: Path) -> None:
         command, _, argument = raw.partition(" ")
 
         try:
-            if command in {"f", "u", "r", "e", "c"}:
+            if command == "a":
+                show_analysis(case)
+                continue
+
+            elif command in {"f", "u", "r", "e", "c"}:
                 _open(case, files, command, argument)
+
             elif command.isdigit():
                 viewer.view(case, files[int(command) - 1])
             else:
                 console.print("\n[red]Opción inválida.[/]")
                 continue
+
         except (IndexError, ValueError):
             console.print("\n[red]Número fuera de rango.[/]")
             continue

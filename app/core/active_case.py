@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -42,7 +43,5 @@ def has_case():
 def close_case():
     global CURRENT_CASE
     CURRENT_CASE = None
-    try:
+    with contextlib.suppress(OSError):
         ACTIVE_CASE_FILE.unlink()
-    except OSError:
-        pass

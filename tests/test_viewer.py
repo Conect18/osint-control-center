@@ -32,13 +32,21 @@ def test_deteccion_binaria():
     assert is_binary(b"\x00\x01\x02")
 
 
-def test_lectura_latin1(case):
-    path = case / "users" / "latin.txt"
-    path.write_bytes("ñandú".encode("latin-1"))
+def test_lectura_cp1252(case):
+    path = case / "users" / "win.txt"
+    path.write_bytes("ñandú".encode("cp1252"))
     text, encoding = read_text_safe(path)
     assert text == "ñandú"
-    assert encoding == "latin-1"
+    assert encoding == "cp1252"
 
+
+def test_lectura_latin1(case):
+    path = case / "users" / "latin.txt"
+    # 0x81 y 0x8D no existen en cp1252: fuerza el fallback a latin-1.
+    path.write_bytes(b"\x81\x8d\xf1")
+    text, encoding = read_text_safe(path)
+    assert encoding == "latin-1"
+    assert "\xf1" in text
 
 def test_view_inexistente(case):
     from app.ui import viewer

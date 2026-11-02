@@ -43,3 +43,9 @@ reports/
 .DS_Store
 *.swp
 .vscode/
+
+# Archivos privados locales
+/active_case.json
+/any.jimenez.79.csv
+/rossychinga.csv
+/.gigitone

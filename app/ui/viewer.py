@@ -118,7 +118,9 @@ def view(case_dir: Path, path: Path, *, raw: bool = False) -> bool:
 
     if size > MAX_INLINE_BYTES:
         console.print(_header(case_dir, target))
-        console.print(f"\n[yellow]Archivo grande ({size} bytes); se abre en el visor del sistema.[/]")
+        console.print(
+            f"\n[yellow]Archivo grande ({size} bytes); se abre en el visor del sistema.[/]"
+        )
         return open_external(target)
 
     if size == 0:

@@ -2,10 +2,10 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from app.config import settings
 from app.config.settings import ensure_dirs
 from app.core.active_case import set_case
 from app.core.normalize import normalize_target, slugify
-from app.config import settings
 
 CATEGORIES = ("users", "emails", "domains", "hosts")
 CASE_FOLDERS = ("logs", "reports", "metadata", "evidence", *CATEGORIES)

@@ -1,11 +1,12 @@
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from app.config.settings import CASES_PATH, LAB_PATH
 from app.core.active_case import get_case
 
 console = Console()
@@ -20,18 +21,23 @@ def get_version(command):
         result = subprocess.run(
             command,
             capture_output=True,
-            text=True
+            text=True,
+            timeout=5,
+            check=False,
         )
+
+        if result.returncode != 0 or not result.stdout.strip():
+            return "-"
 
         return result.stdout.splitlines()[0]
 
-    except Exception:
+    except (OSError, subprocess.TimeoutExpired):
         return "-"
 
 
 def count_cases():
 
-    cases = Path.home() / "osint-lab" / "cases"
+    cases = CASES_PATH
 
     if not cases.exists():
         return 0
@@ -83,5 +89,5 @@ def show_dashboard():
     console.print(table)
 
     console.print(
-        f"\n[cyan]Laboratorio:[/] {Path.home() / 'osint-lab'}"
+        f"\n[cyan]Laboratorio:[/] {LAB_PATH}"
     )

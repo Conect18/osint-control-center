@@ -5,13 +5,14 @@ explícito. OK solo se asigna si el proceso terminó bien Y produjo salida
 parseable; un exit 0 sin resultados es EMPTY, no éxito.
 """
 
+import contextlib
 import json
 import os
 import signal
 import subprocess
 import time
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from shutil import which
 
@@ -23,7 +24,7 @@ MAX_CAPTURE = 8 * 1024 * 1024
 TRUNCATED = "\n...[salida truncada]\n"
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     OK = "ok"
     EMPTY = "empty"
     ERROR = "error"
@@ -72,10 +73,8 @@ class ToolResult:
 
 
 def _safe_log(case_path, level, message):
-    try:
+    with contextlib.suppress(Exception):
         log(case_path, level, message)
-    except Exception:
-        pass
 
 
 def _cap(text):

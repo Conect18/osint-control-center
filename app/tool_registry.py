@@ -4,7 +4,11 @@ import json
 from pathlib import Path
 
 from app.services import (
-    holehe_service, maigret_service, nmap_service, sherlock_service, sublist3r_service,
+    holehe_service,
+    maigret_service,
+    nmap_service,
+    sherlock_service,
+    sublist3r_service,
 )
 
 STATE_FILE = Path(__file__).resolve().parent / "config" / "tools.json"
