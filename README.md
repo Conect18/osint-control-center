@@ -40,8 +40,8 @@ Los resultados son indicios técnicos y no constituyen por sí solos una confirm
 Clonar el repositorio:
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
-cd osint-lab
+git clone https://github.com/Conect18/osint-control-center.git
+cd osint-control-center
 ```
 
 Crear y activar el entorno virtual:
